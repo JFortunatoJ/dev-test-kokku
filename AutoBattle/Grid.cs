@@ -18,10 +18,11 @@ namespace AutoBattle
             Console.WriteLine("The battle field has been created\n");
             for (int i = 0; i < Lines; i++)
             {
-                    grids.Add(newBox);
+                //    grids.Add(newBox);
                 for(int j = 0; j < Columns; j++)
                 {
                     GridBox newBox = new GridBox(j, i, false, (Columns * i + j));
+                    grids.Add(newBox);
                     Console.Write($"{newBox.Index}\n");
                 }
             }

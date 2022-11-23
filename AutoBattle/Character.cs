@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
 using static AutoBattle.Types;
 
 namespace AutoBattle
@@ -9,25 +6,26 @@ namespace AutoBattle
     public class Character
     {
         public string Name { get; set; }
-        public float Health;
-        public float BaseDamage;
+        public float health;
+        public float baseDamage;
         public float DamageMultiplier { get; set; }
         public GridBox currentBox;
-        public int PlayerIndex;
-        public Character Target { get; set; } 
+        public int playerIndex;
+        public Character Target { get; set; }
+
         public Character(CharacterClass characterClass)
         {
-
         }
 
 
         public bool TakeDamage(float amount)
         {
-            if((Health -= BaseDamage) <= 0)
+            if ((health -= baseDamage) <= 0)
             {
                 Die();
                 return true;
             }
+
             return false;
         }
 
@@ -36,69 +34,67 @@ namespace AutoBattle
             //TODO >> maybe kill him?
         }
 
-        public void WalkTO(bool CanWalk)
+        public void WalkTo(bool canWalk)
         {
-
         }
 
         public void StartTurn(Grid battlefield)
         {
-
-            if (CheckCloseTargets(battlefield)) 
+            if (CheckCloseTargets(battlefield))
             {
                 Attack(Target);
-                
-
                 return;
             }
             else
-            {   // if there is no target close enough, calculates in wich direction this character should move to be closer to a possible target
-                if(this.currentBox.xIndex > Target.currentBox.xIndex)
+            {
+                // if there is no target close enough, calculates in wich direction this character should move to be closer to a possible target
+                if (this.currentBox.xIndex > Target.currentBox.xIndex)
                 {
-                    if ((battlefield.grids.Exists(x => x.Index == currentBox.Index - 1)))
+                    if ((battlefield.grids.Exists(x => x.index == currentBox.index - 1)))
                     {
                         currentBox.ocupied = false;
-                        battlefield.grids[currentBox.Index] = currentBox;
-                        currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index - 1));
+                        battlefield.grids[currentBox.index] = currentBox;
+                        currentBox = (battlefield.grids.Find(x => x.index == currentBox.index - 1));
                         currentBox.ocupied = true;
-                        battlefield.grids[currentBox.Index] = currentBox;
-                        Console.WriteLine($"Player {PlayerIndex} walked left\n");
-                        battlefield.drawBattlefield(5, 5);
+                        battlefield.grids[currentBox.index] = currentBox;
+                        Console.WriteLine($"Player {playerIndex} walked left\n");
+                        battlefield.DrawBattlefield(5, 5);
 
                         return;
                     }
-                } else if(currentBox.xIndex < Target.currentBox.xIndex)
+                }
+                else if (currentBox.xIndex < Target.currentBox.xIndex)
                 {
                     currentBox.ocupied = false;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index + 1));
+                    battlefield.grids[currentBox.index] = currentBox;
+                    currentBox = (battlefield.grids.Find(x => x.index == currentBox.index + 1));
                     currentBox.ocupied = true;
                     return;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    Console.WriteLine($"Player {PlayerIndex} walked right\n");
-                    battlefield.drawBattlefield(5, 5);
+                    battlefield.grids[currentBox.index] = currentBox;
+                    Console.WriteLine($"Player {playerIndex} walked right\n");
+                    battlefield.DrawBattlefield(5, 5);
                 }
 
                 if (this.currentBox.yIndex > Target.currentBox.yIndex)
                 {
-                    battlefield.drawBattlefield(5, 5);
+                    battlefield.DrawBattlefield(5, 5);
                     this.currentBox.ocupied = false;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    this.currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index - battlefield.xLenght));
+                    battlefield.grids[currentBox.index] = currentBox;
+                    this.currentBox = (battlefield.grids.Find(x => x.index == currentBox.index - battlefield.XLength));
                     this.currentBox.ocupied = true;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    Console.WriteLine($"Player {PlayerIndex} walked up\n");
+                    battlefield.grids[currentBox.index] = currentBox;
+                    Console.WriteLine($"Player {playerIndex} walked up\n");
                     return;
                 }
-                else if(this.currentBox.yIndex < Target.currentBox.yIndex)
+                else if (this.currentBox.yIndex < Target.currentBox.yIndex)
                 {
                     this.currentBox.ocupied = true;
-                    battlefield.grids[currentBox.Index] = this.currentBox;
-                    this.currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index + battlefield.xLenght));
+                    battlefield.grids[currentBox.index] = this.currentBox;
+                    this.currentBox = (battlefield.grids.Find(x => x.index == currentBox.index + battlefield.XLength));
                     this.currentBox.ocupied = false;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    Console.WriteLine($"Player {PlayerIndex} walked down\n");
-                    battlefield.drawBattlefield(5, 5);
+                    battlefield.grids[currentBox.index] = currentBox;
+                    Console.WriteLine($"Player {playerIndex} walked down\n");
+                    battlefield.DrawBattlefield(5, 5);
 
                     return;
                 }
@@ -106,25 +102,27 @@ namespace AutoBattle
         }
 
         // Check in x and y directions if there is any character close enough to be a target.
-        bool CheckCloseTargets(Grid battlefield)
+        private bool CheckCloseTargets(Grid battlefield)
         {
-            bool left = (battlefield.grids.Find(x => x.Index == currentBox.Index - 1).ocupied);
-            bool right = (battlefield.grids.Find(x => x.Index == currentBox.Index + 1).ocupied);
-            bool up = (battlefield.grids.Find(x => x.Index == currentBox.Index + battlefield.xLenght).ocupied);
-            bool down = (battlefield.grids.Find(x => x.Index == currentBox.Index - battlefield.xLenght).ocupied);
+            bool left = (battlefield.grids.Find(x => x.index == currentBox.index - 1).ocupied);
+            bool right = (battlefield.grids.Find(x => x.index == currentBox.index + 1).ocupied);
+            bool up = (battlefield.grids.Find(x => x.index == currentBox.index + battlefield.XLength).ocupied);
+            bool down = (battlefield.grids.Find(x => x.index == currentBox.index - battlefield.XLength).ocupied);
 
-            if (left & right & up & down) 
+            if (left & right & up & down)
             {
                 return true;
             }
-            return false; 
+
+            return false;
         }
 
-        public void Attack (Character target)
+        public void Attack(Character target)
         {
             var rand = new Random();
-            target.TakeDamage(rand.Next(0, (int)BaseDamage));
-            Console.WriteLine($"Player {PlayerIndex} is attacking the player {Target.PlayerIndex} and did {BaseDamage} damage\n");
+            target.TakeDamage(rand.Next(0, (int)baseDamage));
+            Console.WriteLine(
+                $"Player {playerIndex} is attacking the player {Target.playerIndex} and did {baseDamage} damage\n");
         }
     }
 }

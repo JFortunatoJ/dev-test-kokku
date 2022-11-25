@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Drawing;
-using System.Numerics;
 using static AutoBattle.Types;
 
 namespace AutoBattle
@@ -11,12 +9,6 @@ namespace AutoBattle
         {
             get => _playerIndex;
             private set => _playerIndex = value;
-        }
-        
-        public string Name
-        {
-            get => _name;
-            private set => _name = value;
         }
 
         public float Health
@@ -43,11 +35,7 @@ namespace AutoBattle
             private set => _characterClass = value;
         }
 
-        public ConsoleColor Color
-        {
-            get;
-            private set;
-        }
+        public Team Team { get; private set; }
 
         public Tile CurrentTile
         {
@@ -58,18 +46,16 @@ namespace AutoBattle
         public bool IsDead => Health <= 0;
 
         private int _playerIndex;
-        private string _name;
         private float _health;
         private float _baseDamage;
         private float _damageMultiplier;
         private CharacterClass _characterClass;
         private Tile _closestTileWithOpponent;
 
-        public Character(int playerIndex, string name, CharacterClass characterClass, ConsoleColor color, float health = 100, float baseDamage = 20, float damageMultiplier = 1)
+        public Character(int playerIndex, Team team, CharacterClass characterClass, float health = 100, float baseDamage = 20, float damageMultiplier = 1)
         {
             PlayerIndex = playerIndex;
-            Name = name;
-            Color = color;
+            Team = team;
             CharacterClass = characterClass;
             Health = health;
             BaseDamage = baseDamage;

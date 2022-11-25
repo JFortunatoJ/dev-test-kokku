@@ -22,7 +22,7 @@ namespace AutoBattle
 
         public ConsoleColor GetColor()
         {
-            return IsOccupied ? character.Color : ConsoleColor.White;
+            return IsOccupied ? character.Team.Color : ConsoleColor.White;
         }
     }
 }

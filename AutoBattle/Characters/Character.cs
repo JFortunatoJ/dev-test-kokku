@@ -1,100 +1,128 @@
 ﻿using System;
+using System.Collections.Generic;
+using AutoBattle.SpecialAbilities;
 using static AutoBattle.Types;
 
 namespace AutoBattle
 {
-    public class Character
+    public abstract class Character
     {
-        public int PlayerIndex
-        {
-            get => _playerIndex;
-            private set => _playerIndex = value;
-        }
+        public int PlayerIndex { get; set; }
 
         public float Health
         {
             get => _health;
-            private set => _health = value;
+            private set
+            {
+                _health = Math.Clamp(value, 0, _maxHealth);
+            }
         }
 
-        public float BaseDamage
-        {
-            get => _baseDamage;
-            private set => _baseDamage = value;
-        }
+        public float BaseDamage { get; private set; }
 
-        public float DamageMultiplier
-        {
-            get => _damageMultiplier;
-            private set => _damageMultiplier = value;
-        }
+        public float DamageMultiplier { get; set; }
 
-        public CharacterClass CharacterClass
-        {
-            get => _characterClass;
-            private set => _characterClass = value;
-        }
+        public CharacterClass CharacterClass { get; set; }
 
         public Team Team { get; private set; }
 
-        public Tile CurrentTile
-        {
-            get;
-            private set;
-        }
+        public Tile CurrentTile { get; set; }
 
         public bool IsDead => Health <= 0;
 
-        private int _playerIndex;
-        private float _health;
-        private float _baseDamage;
-        private float _damageMultiplier;
-        private CharacterClass _characterClass;
-        private Tile _closestTileWithOpponent;
+        public bool IsStunned { get; set; }
 
-        public Character(int playerIndex, Team team, CharacterClass characterClass, float health = 100, float baseDamage = 20, float damageMultiplier = 1)
+        private float _health;
+        private Tile _closestTileWithOpponent;
+        private float _maxHealth;
+
+        public Character() {}
+
+        public Character(int playerIndex, Team team, CharacterClass characterClass, float maxHealth = 100, float baseDamage = 20, float damageMultiplier = 1)
         {
             PlayerIndex = playerIndex;
             Team = team;
             CharacterClass = characterClass;
-            Health = health;
+            Health = _maxHealth = maxHealth;
             BaseDamage = baseDamage;
             DamageMultiplier = damageMultiplier;
+
+            //_effects = new List<StatusEffect>();
         }
 
         public void StartTurn(Battlefield battlefield)
         {
+            ApplyEffects();
+
+            if (IsDead || IsStunned) return;
+
             _closestTileWithOpponent = GetClosestTileWithOpponent(battlefield);
-            
+
             if (CanAttack(_closestTileWithOpponent))
             {
-                Attack(_closestTileWithOpponent.character);
+                Random rand = new Random();
+                if (rand.Next(0, 10) <= 7)
+                {
+                    Attack(_closestTileWithOpponent.character);
+                }
+                else
+                {
+                    _closestTileWithOpponent.character.AddEffect(new KnockDownEffect());
+                }
+
                 return;
             }
 
             WalkTo(GetTileToMove(battlefield));
         }
-        
-        public void Attack(Character target)
+
+        private void Attack(Character target)
         {
-            target.TakeDamage(_baseDamage * _damageMultiplier);
-            Console.WriteLine($"Player {PlayerIndex} is attacking the player {target.PlayerIndex} and did {BaseDamage * _damageMultiplier} damage\n");
+            target.TakeDamage(BaseDamage * DamageMultiplier);
+            Console.WriteLine($"Player {PlayerIndex} is attacking the player {target.PlayerIndex} and did {BaseDamage * DamageMultiplier} damage\n");
         }
-        
-        public bool TakeDamage(float amount)
+
+        public void TakeDamage(float amount)
         {
-            if ((Health -= amount) <= 0)
+            if (IsDead) return;
+
+            Health -= amount;
+        }
+
+        public void Heal(float amount)
+        {
+            if (IsDead) return;
+
+            Health += amount;
+        }
+
+        public void AddEffect(StatusEffect effect)
+        {
+            /*
+            //Prevents the effect from being applied again
+            if (_effects.Find(statusEffect => statusEffect.id.Equals(effect.id)) != null)
             {
-                Die();
-                return true;
+                return;
             }
 
-            return false;
+            _effects.Add(effect);
+            */
         }
 
-        public void Die()
+        protected void ApplyEffects()
         {
-            //TODO >> maybe kill him?
+            /*
+            for (int i = 0; i < _effects.Count; i++)
+            {
+                _effects[i].Apply(this);
+
+                if (_effects[i].turnsDuration <= 0)
+                {
+                    _effects.Remove(_effects[i]);
+                    i--;
+                }
+            }
+            */
         }
 
         public void WalkTo(Tile tile)
@@ -108,11 +136,15 @@ namespace AutoBattle
             CurrentTile.character = this;
         }
 
-        private bool CanAttack(Tile targetTile)
+        public abstract void StatusEffect(Character target);
+
+        public abstract void SpecialAbility();
+
+        protected bool CanAttack(Tile targetTile)
         {
             Types.Vector2 distance = Types.Vector2.Distance(CurrentTile.position, targetTile.position);
-            if ((distance.x == 1 && CurrentTile.position.y == targetTile.position.y) ||
-                (distance.y == 1 && CurrentTile.position.x == targetTile.position.x))
+            if (((distance.x == 1 && CurrentTile.position.y == targetTile.position.y) ||
+                    (distance.y == 1 && CurrentTile.position.x == targetTile.position.x)) && !targetTile.character.IsDead)
             {
                 return true;
             }
@@ -120,7 +152,7 @@ namespace AutoBattle
             return false;
         }
 
-        private Tile GetClosestTileWithOpponent(Battlefield battlefield)
+        protected Tile GetClosestTileWithOpponent(Battlefield battlefield)
         {
             float closestTargetDistance = battlefield.TilesAmount;
             Tile closestTileWithOpponent = null;
@@ -130,7 +162,7 @@ namespace AutoBattle
                 for (int j = 0; j < battlefield.SizeY; j++)
                 {
                     Tile tile = battlefield.grid[i, j];
-                    if(!tile.IsOccupied || tile.character._playerIndex == PlayerIndex)
+                    if (!tile.IsOccupied || tile.character.Team.Name == Team.Name || tile.character.IsDead)
                         continue;
 
                     float distance = Types.Vector2.Distance(CurrentTile.position, tile.position).Magnitude;
@@ -145,16 +177,16 @@ namespace AutoBattle
             return closestTileWithOpponent;
         }
 
-        private Tile GetTileToMove(Battlefield battlefield)
+        protected Tile GetTileToMove(Battlefield battlefield)
         {
             //TODO: Maybe A* Pathfinding?
-            
+
             Types.Vector2 tilePosition = CurrentTile.position;
-            Types.Vector2 direction =  _closestTileWithOpponent.position - CurrentTile.position;
+            Types.Vector2 direction = _closestTileWithOpponent.position - CurrentTile.position;
 
             direction.Normalize();
             Console.WriteLine($"X:{direction.x}|Y:{direction.y}");
-            
+
             if (direction.x > 0)
             {
                 int targetX = (int)(CurrentTile.position.x + direction.x);
@@ -184,7 +216,7 @@ namespace AutoBattle
                     return battlefield.grid[(int)tilePosition.x, (int)tilePosition.y];
                 }
             }
-            
+
             if (direction.y < 0)
             {
                 int targetY = (int)(CurrentTile.position.y + direction.y);

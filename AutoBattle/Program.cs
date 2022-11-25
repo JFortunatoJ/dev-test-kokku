@@ -24,11 +24,6 @@ namespace AutoBattle
             {
                 SetupCharacters(() =>
                 {
-                    Console.ForegroundColor = _playerTeam.Color;
-                    Console.Write(_playerTeam.Name);
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.Write($" Class Choice: {_playerTeam.});
-                    
                     GetBattlefieldSize(StartGame);
                 });
             }
@@ -51,21 +46,31 @@ namespace AutoBattle
                     }
                 } while (!validChoice);
 
-                _playerTeam = CreateTeam("Player", 3, ConsoleColor.Blue, (CharacterClass)choice);
+                _playerTeam = CreateTeam("Player", 1, ConsoleColor.Blue, (CharacterClass)choice);
+                
+                Console.ForegroundColor = _playerTeam.Color;
+                Console.Write(_playerTeam.Name);
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write($" Class Choice: {_playerTeam.Class.ToString()}");
+                Console.Write(Environment.NewLine);
 
                 var rand = new Random();
                 int randomInteger = rand.Next(1, 5);
                 CharacterClass enemyClass = (CharacterClass)randomInteger;
 
-                _enemyTeam = CreateTeam("Enemy", 3, ConsoleColor.Red, enemyClass);
-                Console.Write(Environment.NewLine + Environment.NewLine);
+                _enemyTeam = CreateTeam("Enemy", 1, ConsoleColor.Red, enemyClass);
+                Console.ForegroundColor = _enemyTeam.Color;
+                Console.Write(_enemyTeam.Name);
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write($" Class Choice: {_enemyTeam.Class.ToString()}");
+                Console.Write(Environment.NewLine);
 
                 callback?.Invoke();
             }
 
             Team CreateTeam(string name, int charactersAmount, ConsoleColor color, CharacterClass characterClass)
             {
-                Team newTeam = new Team(name, color);
+                Team newTeam = new Team(name, color, characterClass);
                 for (int i = 0; i < charactersAmount; i++)
                 {
                     Character newCharacter = new Character(i, newTeam, characterClass);

@@ -17,7 +17,17 @@ namespace AutoBattle
 
         public string GetTileContent()
         {
-            return !IsOccupied ? "   " : character.Health.ToString(CultureInfo.InvariantCulture);
+            if (!IsOccupied)
+            {
+                return "   ";
+            }
+
+            if (!character.IsDead)
+            {
+                return character.Health.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return "XXX";
         }
 
         public ConsoleColor GetColor()

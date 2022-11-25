@@ -4,21 +4,6 @@ namespace AutoBattle
 {
     public class Types
     {
-        public struct CharacterClassSpecific
-        {
-            public CharacterClass CharacterClass;
-            public float hpModifier;
-            public float classDamage;
-            public CharacterSkills[] skills;
-        }
-
-        public struct CharacterSkills
-        {
-            public string name;
-            public float damage;
-            public float damageMultiplier;
-        }
-
         public struct Vector2
         {
             public float x;

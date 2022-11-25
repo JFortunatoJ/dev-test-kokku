@@ -1,21 +1,18 @@
 ﻿using System;
-using System.Drawing;
 using System.Globalization;
 
 namespace AutoBattle
 {
     public class Tile
     {
-        public int lineIndex;
-        public int columnIndex;
+        public Types.Vector2 position;
         public Character character;
 
         public bool IsOccupied => character != null;
 
-        public Tile(int lineIndex, int columnIndex)
+        public Tile(Types.Vector2 position)
         {
-            this.lineIndex = lineIndex;
-            this.columnIndex = columnIndex;
+            this.position = position;
         }
 
         public string GetTileContent()

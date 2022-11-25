@@ -1,32 +1,31 @@
 ﻿using System;
-using static AutoBattle.Types;
 
 namespace AutoBattle
 {
     public class Battlefield
     {
-        private int _lines;
-        private int _columns;
+        private int _sizeX;
+        private int _sizeY;
 
-        public int Lines => _lines;
-        public int Columns => _columns;
+        public int SizeX => _sizeX;
+        public int SizeY => _sizeY;
 
-        public int TilesAmount => Lines * Columns;
+        public int TilesAmount => SizeX * SizeY;
 
         public Tile[,] grid;
 
-        public Battlefield(int lines, int columns)
+        public Battlefield(int sizeX, int sizeY)
         {
-            _lines = lines;
-            _columns = columns;
+            _sizeX = sizeX;
+            _sizeY = sizeY;
 
-            grid = new Tile[lines, columns];
+            grid = new Tile[sizeX, sizeY];
 
-            for (int i = 0; i < lines; i++)
+            for (int i = 0; i < sizeX; i++)
             {
-                for (int j = 0; j < columns; j++)
+                for (int j = 0; j < sizeY; j++)
                 {
-                    grid[i, j] = new Tile(i, j);
+                    grid[i, j] = new Tile(new Types.Vector2(i, j));
                 }
             }
 
@@ -36,9 +35,9 @@ namespace AutoBattle
         // prints the matrix that indicates the tiles of the battlefield
         public void DrawBattlefield()
         {
-            for (int i = 0; i < _lines; i++)
+            for (int i = 0; i < _sizeX; i++)
             {
-                for (int j = 0; j < _columns; j++)
+                for (int j = 0; j < _sizeY; j++)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.Write("[");
@@ -51,7 +50,7 @@ namespace AutoBattle
                 Console.Write(Environment.NewLine + Environment.NewLine);
             }
 
-            Console.Write(Environment.NewLine + Environment.NewLine);
+            Console.Write(Environment.NewLine);
         }
     }
 }

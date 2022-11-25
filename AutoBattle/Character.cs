@@ -1,33 +1,108 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
+using System.Drawing;
+using System.Numerics;
 using static AutoBattle.Types;
 
 namespace AutoBattle
 {
     public class Character
     {
-        public string Name { get; set; }
-        public float Health;
-        public float BaseDamage;
-        public float DamageMultiplier { get; set; }
-        public GridBox currentBox;
-        public int PlayerIndex;
-        public Character Target { get; set; } 
-        public Character(CharacterClass characterClass)
+        public int PlayerIndex
         {
-
+            get => _playerIndex;
+            private set => _playerIndex = value;
+        }
+        
+        public string Name
+        {
+            get => _name;
+            private set => _name = value;
         }
 
+        public float Health
+        {
+            get => _health;
+            private set => _health = value;
+        }
 
+        public float BaseDamage
+        {
+            get => _baseDamage;
+            private set => _baseDamage = value;
+        }
+
+        public float DamageMultiplier
+        {
+            get => _damageMultiplier;
+            private set => _damageMultiplier = value;
+        }
+
+        public CharacterClass CharacterClass
+        {
+            get => _characterClass;
+            private set => _characterClass = value;
+        }
+
+        public ConsoleColor Color
+        {
+            get;
+            private set;
+        }
+
+        public Tile CurrentTile
+        {
+            get;
+            private set;
+        }
+
+        public bool IsDead => Health <= 0;
+
+        private int _playerIndex;
+        private string _name;
+        private float _health;
+        private float _baseDamage;
+        private float _damageMultiplier;
+        private CharacterClass _characterClass;
+        private Tile _closestTileWithOpponent;
+
+        public Character(int playerIndex, string name, CharacterClass characterClass, ConsoleColor color, float health = 100, float baseDamage = 20, float damageMultiplier = 1)
+        {
+            PlayerIndex = playerIndex;
+            Name = name;
+            Color = color;
+            CharacterClass = characterClass;
+            Health = health;
+            BaseDamage = baseDamage;
+            DamageMultiplier = damageMultiplier;
+        }
+
+        public void StartTurn(Battlefield battlefield)
+        {
+            _closestTileWithOpponent = GetClosestTileWithOpponent(battlefield);
+            
+            if (CanAttack(_closestTileWithOpponent))
+            {
+                Attack(_closestTileWithOpponent.character);
+                return;
+            }
+
+            WalkTo(GetTileToMove(battlefield));
+        }
+        
+        public void Attack(Character target)
+        {
+            target.TakeDamage(_baseDamage * _damageMultiplier);
+            Console.WriteLine($"Player {PlayerIndex} is attacking the player {target.PlayerIndex} and did {BaseDamage * _damageMultiplier} damage\n");
+        }
+        
         public bool TakeDamage(float amount)
         {
-            if((Health -= BaseDamage) <= 0)
+            if ((Health -= amount) <= 0)
             {
                 Die();
                 return true;
             }
+
             return false;
         }
 
@@ -36,95 +111,105 @@ namespace AutoBattle
             //TODO >> maybe kill him?
         }
 
-        public void WalkTO(bool CanWalk)
+        public void WalkTo(Tile tile)
         {
-
-        }
-
-        public void StartTurn(Grid battlefield)
-        {
-
-            if (CheckCloseTargets(battlefield)) 
+            if (CurrentTile != null)
             {
-                Attack(Target);
-                
-
-                return;
+                CurrentTile.character = null;
             }
-            else
-            {   // if there is no target close enough, calculates in wich direction this character should move to be closer to a possible target
-                if(this.currentBox.xIndex > Target.currentBox.xIndex)
-                {
-                    if ((battlefield.grids.Exists(x => x.Index == currentBox.Index - 1)))
-                    {
-                        currentBox.ocupied = false;
-                        battlefield.grids[currentBox.Index] = currentBox;
-                        currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index - 1));
-                        currentBox.ocupied = true;
-                        battlefield.grids[currentBox.Index] = currentBox;
-                        Console.WriteLine($"Player {PlayerIndex} walked left\n");
-                        battlefield.drawBattlefield(5, 5);
 
-                        return;
-                    }
-                } else if(currentBox.xIndex < Target.currentBox.xIndex)
-                {
-                    currentBox.ocupied = false;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index + 1));
-                    currentBox.ocupied = true;
-                    return;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    Console.WriteLine($"Player {PlayerIndex} walked right\n");
-                    battlefield.drawBattlefield(5, 5);
-                }
-
-                if (this.currentBox.yIndex > Target.currentBox.yIndex)
-                {
-                    battlefield.drawBattlefield(5, 5);
-                    this.currentBox.ocupied = false;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    this.currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index - battlefield.xLenght));
-                    this.currentBox.ocupied = true;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    Console.WriteLine($"Player {PlayerIndex} walked up\n");
-                    return;
-                }
-                else if(this.currentBox.yIndex < Target.currentBox.yIndex)
-                {
-                    this.currentBox.ocupied = true;
-                    battlefield.grids[currentBox.Index] = this.currentBox;
-                    this.currentBox = (battlefield.grids.Find(x => x.Index == currentBox.Index + battlefield.xLenght));
-                    this.currentBox.ocupied = false;
-                    battlefield.grids[currentBox.Index] = currentBox;
-                    Console.WriteLine($"Player {PlayerIndex} walked down\n");
-                    battlefield.drawBattlefield(5, 5);
-
-                    return;
-                }
-            }
+            CurrentTile = tile;
+            CurrentTile.character = this;
         }
 
-        // Check in x and y directions if there is any character close enough to be a target.
-        bool CheckCloseTargets(Grid battlefield)
+        private bool CanAttack(Tile targetTile)
         {
-            bool left = (battlefield.grids.Find(x => x.Index == currentBox.Index - 1).ocupied);
-            bool right = (battlefield.grids.Find(x => x.Index == currentBox.Index + 1).ocupied);
-            bool up = (battlefield.grids.Find(x => x.Index == currentBox.Index + battlefield.xLenght).ocupied);
-            bool down = (battlefield.grids.Find(x => x.Index == currentBox.Index - battlefield.xLenght).ocupied);
-
-            if (left & right & up & down) 
+            Types.Vector2 distance = Types.Vector2.Distance(CurrentTile.position, targetTile.position);
+            if ((distance.x == 1 && CurrentTile.position.y == targetTile.position.y) ||
+                (distance.y == 1 && CurrentTile.position.x == targetTile.position.x))
             {
                 return true;
             }
-            return false; 
+
+            return false;
         }
 
-        public void Attack (Character target)
+        private Tile GetClosestTileWithOpponent(Battlefield battlefield)
         {
-            var rand = new Random();
-            target.TakeDamage(rand.Next(0, (int)BaseDamage));
-            Console.WriteLine($"Player {PlayerIndex} is attacking the player {Target.PlayerIndex} and did {BaseDamage} damage\n");
+            float closestTargetDistance = battlefield.TilesAmount;
+            Tile closestTileWithOpponent = null;
+
+            for (int i = 0; i < battlefield.SizeX; i++)
+            {
+                for (int j = 0; j < battlefield.SizeY; j++)
+                {
+                    Tile tile = battlefield.grid[i, j];
+                    if(!tile.IsOccupied || tile.character._playerIndex == PlayerIndex)
+                        continue;
+
+                    float distance = Types.Vector2.Distance(CurrentTile.position, tile.position).Magnitude;
+                    if (distance < closestTargetDistance)
+                    {
+                        closestTargetDistance = distance;
+                        closestTileWithOpponent = tile;
+                    }
+                }
+            }
+
+            return closestTileWithOpponent;
+        }
+
+        private Tile GetTileToMove(Battlefield battlefield)
+        {
+            //TODO: Maybe A* Pathfinding?
+            
+            Types.Vector2 tilePosition = CurrentTile.position;
+            Types.Vector2 direction =  _closestTileWithOpponent.position - CurrentTile.position;
+
+            direction.Normalize();
+            Console.WriteLine($"X:{direction.x}|Y:{direction.y}");
+            
+            if (direction.x > 0)
+            {
+                int targetX = (int)(CurrentTile.position.x + direction.x);
+                if (targetX < battlefield.SizeX && !battlefield.grid[targetX, (int)CurrentTile.position.y].IsOccupied)
+                {
+                    tilePosition.x = targetX;
+                    return battlefield.grid[(int)tilePosition.x, (int)tilePosition.y];
+                }
+            }
+
+            if (direction.x < 0)
+            {
+                int targetX = (int)(CurrentTile.position.x + direction.x);
+                if (targetX >= 0 && !battlefield.grid[targetX, (int)CurrentTile.position.y].IsOccupied)
+                {
+                    tilePosition.x = targetX;
+                    return battlefield.grid[(int)tilePosition.x, (int)tilePosition.y];
+                }
+            }
+
+            if (direction.y > 0)
+            {
+                int targetY = (int)(CurrentTile.position.y + direction.y);
+                if (targetY < battlefield.SizeY && !battlefield.grid[(int)CurrentTile.position.x, targetY].IsOccupied)
+                {
+                    tilePosition.y = targetY;
+                    return battlefield.grid[(int)tilePosition.x, (int)tilePosition.y];
+                }
+            }
+            
+            if (direction.y < 0)
+            {
+                int targetY = (int)(CurrentTile.position.y + direction.y);
+                if (targetY >= 0 && !battlefield.grid[(int)CurrentTile.position.x, targetY].IsOccupied)
+                {
+                    tilePosition.y = targetY;
+                    return battlefield.grid[(int)tilePosition.x, (int)tilePosition.y];
+                }
+            }
+
+            return CurrentTile;
         }
     }
 }

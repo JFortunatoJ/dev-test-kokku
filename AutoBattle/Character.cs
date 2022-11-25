@@ -55,6 +55,8 @@ namespace AutoBattle
             private set;
         }
 
+        public bool IsDead => Health <= 0;
+
         private int _playerIndex;
         private string _name;
         private float _health;

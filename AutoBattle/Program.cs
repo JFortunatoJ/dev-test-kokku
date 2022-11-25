@@ -71,7 +71,7 @@ namespace AutoBattle
                 } while (randomLocation.IsOccupied);
 
                 Console.Write($"[{randomLocation.position.x},{randomLocation.position.y}]\n");
-                
+
                 playerCharacter.WalkTo(randomLocation);
             }
 
@@ -142,7 +142,7 @@ namespace AutoBattle
 
                 Console.Write($"[{randomLocation.position.x},{randomLocation.position.y}]\n");
                 enemyCharacter.WalkTo(randomLocation);
-                
+
                 StartTurn();
             }
 
@@ -150,8 +150,6 @@ namespace AutoBattle
             {
                 AllocatePlayer();
                 AllocateEnemy();
-                
-                
             }
 
             void StartTurn()
@@ -160,20 +158,35 @@ namespace AutoBattle
 
                 if (currentTurn == 0)
                 {
-                    //TODO: get random initial player
+                    Random rand = new Random();
+                    int x = rand.Next(0, 2);
+                    if (x == 0)
+                    {
+                        foreach (Character character in playerCharacters)
+                        {
+                            character.StartTurn(battlefield);
+                        }
+                    }
+                    else
+                    {
+                        foreach (Character enemy in enemyCharacters)
+                        {
+                            enemy.StartTurn(battlefield);
+                        }
+                    }
                 }
-
-                foreach (Character character in playerCharacters)
+                else
                 {
-                    character.StartTurn(battlefield);
-                }
+                    foreach (Character character in playerCharacters)
+                    {
+                        character.StartTurn(battlefield);
+                    }
 
-                /*
-                foreach (Character enemy in enemyCharacters)
-                {
-                    enemy.StartTurn(battlefield);
+                    foreach (Character enemy in enemyCharacters)
+                    {
+                        enemy.StartTurn(battlefield);
+                    }
                 }
-                */
 
                 currentTurn++;
                 HandleTurn();
@@ -183,33 +196,49 @@ namespace AutoBattle
             {
                 battlefield.DrawBattlefield();
 
-                if (playerCharacter.Health == 0)
+                Character winner = GetWinner();
+                if (winner == null)
                 {
-                    Console.WriteLine("Game Over");
-                    return;
-                }
-
-                if (enemyCharacter.Health == 0)
-                {
-                    Console.WriteLine("Victory!");
-                    return;
-                }
-
-                ConsoleKeyInfo key;
-                do
-                {
-                    Console.Write(Environment.NewLine);
-                    Console.WriteLine("Press enter to start the next turn...\n");
-
-                    key = Console.ReadKey();
-
-                    if (key.Key != ConsoleKey.Enter)
+                    ConsoleKeyInfo key;
+                    do
                     {
-                        ClearConsoleLines(4);
-                    }
-                } while (key.Key != ConsoleKey.Enter);
+                        Console.Write(Environment.NewLine);
+                        Console.WriteLine("Press enter to start the next turn...\n");
 
-                StartTurn();
+                        key = Console.ReadKey();
+
+                        if (key.Key != ConsoleKey.Enter)
+                        {
+                            ClearConsoleLines(4);
+                        }
+                    } while (key.Key != ConsoleKey.Enter);
+
+                    StartTurn();
+                    
+                    return;
+                }
+                
+                Console.WriteLine("Game Over!");
+                Console.Write("Character: ");
+                Console.ForegroundColor = winner.Color;
+                Console.Write(winner.Name);
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("  has won!");
+            }
+
+            Character GetWinner()
+            {
+                if (playerCharacter.IsDead)
+                {
+                    return enemyCharacter;
+                }
+
+                if (enemyCharacter.IsDead)
+                {
+                    return playerCharacter;
+                }
+
+                return null;
             }
 
             int GetRandomInt(int min, int max)
@@ -217,7 +246,7 @@ namespace AutoBattle
                 var rand = new Random();
                 return rand.Next(min, max);
             }
-            
+
             (int, int) GetRandomPositionAtGrid()
             {
                 return (GetRandomInt(0, battlefield.SizeX), GetRandomInt(0, battlefield.SizeY));

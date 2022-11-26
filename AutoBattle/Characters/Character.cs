@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using AutoBattle.SpecialAbilities;
 using static AutoBattle.Types;
 
 namespace AutoBattle
@@ -8,7 +7,10 @@ namespace AutoBattle
     public abstract class Character
     {
         public int PlayerIndex { get; set; }
-
+        public virtual string Name
+        {
+            get => Health.ToString();
+        }
         public float Health
         {
             get => _health;
@@ -17,37 +19,29 @@ namespace AutoBattle
                 _health = Math.Clamp(value, 0, _maxHealth);
             }
         }
-
         public float BaseDamage { get; private set; }
-
         public float DamageMultiplier { get; set; }
-
-        public CharacterClass CharacterClass { get; set; }
-
-        public Team Team { get; private set; }
-
+        public Team Team { get; set; }
         public Tile CurrentTile { get; set; }
-
         public bool IsDead => Health <= 0;
-
         public bool IsStunned { get; set; }
 
         private float _health;
         private Tile _closestTileWithOpponent;
         private float _maxHealth;
+        private List<StatusEffect> _effects;
 
         public Character() {}
 
-        public Character(int playerIndex, Team team, CharacterClass characterClass, float maxHealth = 100, float baseDamage = 20, float damageMultiplier = 1)
+        protected Character(int playerIndex, Team team, float maxHealth, float baseDamage, float damageMultiplier)
         {
             PlayerIndex = playerIndex;
             Team = team;
-            CharacterClass = characterClass;
             Health = _maxHealth = maxHealth;
             BaseDamage = baseDamage;
             DamageMultiplier = damageMultiplier;
 
-            //_effects = new List<StatusEffect>();
+            _effects = new List<StatusEffect>();
         }
 
         public void StartTurn(Battlefield battlefield)
@@ -60,6 +54,8 @@ namespace AutoBattle
 
             if (CanAttack(_closestTileWithOpponent))
             {
+                // 70% -> Normal Attack
+                // 30% -> Effect
                 Random rand = new Random();
                 if (rand.Next(0, 10) <= 7)
                 {
@@ -67,7 +63,7 @@ namespace AutoBattle
                 }
                 else
                 {
-                    _closestTileWithOpponent.character.AddEffect(new KnockDownEffect());
+                    StatusEffect(_closestTileWithOpponent.character);
                 }
 
                 return;
@@ -79,7 +75,16 @@ namespace AutoBattle
         private void Attack(Character target)
         {
             target.TakeDamage(BaseDamage * DamageMultiplier);
-            Console.WriteLine($"Player {PlayerIndex} is attacking the player {target.PlayerIndex} and did {BaseDamage * DamageMultiplier} damage\n");
+            
+            Console.ForegroundColor = Team.Color;
+            Console.Write($"{Name}");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write(" attacked the ");
+            Console.ForegroundColor = target.Team.Color;
+            Console.Write($"{target.Name}");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write(" of team ");
+            Console.Write($"and did {BaseDamage * DamageMultiplier} damage.\n");
         }
 
         public void TakeDamage(float amount)
@@ -98,7 +103,6 @@ namespace AutoBattle
 
         public void AddEffect(StatusEffect effect)
         {
-            /*
             //Prevents the effect from being applied again
             if (_effects.Find(statusEffect => statusEffect.id.Equals(effect.id)) != null)
             {
@@ -106,12 +110,10 @@ namespace AutoBattle
             }
 
             _effects.Add(effect);
-            */
         }
 
         protected void ApplyEffects()
         {
-            /*
             for (int i = 0; i < _effects.Count; i++)
             {
                 _effects[i].Apply(this);
@@ -122,7 +124,6 @@ namespace AutoBattle
                     i--;
                 }
             }
-            */
         }
 
         public void WalkTo(Tile tile)
@@ -134,6 +135,11 @@ namespace AutoBattle
 
             CurrentTile = tile;
             CurrentTile.character = this;
+            
+            Console.ForegroundColor = Team.Color;
+            Console.Write($"{Name}");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write($" has moved to tile [{tile.position.y},{tile.position.x}]\n");
         }
 
         public abstract void StatusEffect(Character target);
@@ -142,7 +148,7 @@ namespace AutoBattle
 
         protected bool CanAttack(Tile targetTile)
         {
-            Types.Vector2 distance = Types.Vector2.Distance(CurrentTile.position, targetTile.position);
+            Vector2 distance = Vector2.Distance(CurrentTile.position, targetTile.position);
             if (((distance.x == 1 && CurrentTile.position.y == targetTile.position.y) ||
                     (distance.y == 1 && CurrentTile.position.x == targetTile.position.x)) && !targetTile.character.IsDead)
             {
@@ -165,7 +171,7 @@ namespace AutoBattle
                     if (!tile.IsOccupied || tile.character.Team.Name == Team.Name || tile.character.IsDead)
                         continue;
 
-                    float distance = Types.Vector2.Distance(CurrentTile.position, tile.position).Magnitude;
+                    float distance = Vector2.Distance(CurrentTile.position, tile.position).Magnitude;
                     if (distance < closestTargetDistance)
                     {
                         closestTargetDistance = distance;
@@ -181,11 +187,10 @@ namespace AutoBattle
         {
             //TODO: Maybe A* Pathfinding?
 
-            Types.Vector2 tilePosition = CurrentTile.position;
-            Types.Vector2 direction = _closestTileWithOpponent.position - CurrentTile.position;
+            Vector2 tilePosition = CurrentTile.position;
+            Vector2 direction = _closestTileWithOpponent.position - CurrentTile.position;
 
             direction.Normalize();
-            Console.WriteLine($"X:{direction.x}|Y:{direction.y}");
 
             if (direction.x > 0)
             {

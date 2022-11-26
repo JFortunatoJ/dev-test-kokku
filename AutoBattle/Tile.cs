@@ -24,7 +24,7 @@ namespace AutoBattle
 
             if (!character.IsDead)
             {
-                return character.Health.ToString(CultureInfo.InvariantCulture);
+                return $"{character.Name[0]}{character.Health:00}";
             }
 
             return "XXX";

@@ -8,7 +8,14 @@ namespace AutoBattle
         public string Name { get; private set; }
         public ConsoleColor Color { get; private set; }
         public List<Character> characters;
-        public Types.CharacterClass Class { get; set; }
+
+        public int CurrentCharacterIndex
+        {
+            get => _currentCharacterIndex;
+            private set => _currentCharacterIndex = value % characters.Count;
+        }
+
+        private int _currentCharacterIndex;
 
         public bool AllDead
         {
@@ -26,20 +33,18 @@ namespace AutoBattle
             }
         }
 
-        public Team(string name, ConsoleColor color, Types.CharacterClass characterClass)
+        public Team(string name, ConsoleColor color)
         {
             Name = name;
             Color = color;
-            Class = characterClass;
             characters = new List<Character>();
+            _currentCharacterIndex = 0;
         }
 
         public void StartTurn(Battlefield battlefield)
         {
-            foreach (var character in characters)
-            {
-                character.StartTurn(battlefield);
-            }
+            characters[CurrentCharacterIndex].StartTurn(battlefield);
+            CurrentCharacterIndex++;
         }
     }
 }

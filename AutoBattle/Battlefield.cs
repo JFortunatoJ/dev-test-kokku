@@ -28,13 +28,13 @@ namespace AutoBattle
                     grid[i, j] = new Tile(new Types.Vector2(i, j));
                 }
             }
-
-            Console.WriteLine("The battle field has been created\n");
         }
 
         // prints the matrix that indicates the tiles of the battlefield
         public void DrawBattlefield()
         {
+            Console.Write(Environment.NewLine);
+            
             for (int i = 0; i < _sizeX; i++)
             {
                 for (int j = 0; j < _sizeY; j++)
@@ -46,11 +46,8 @@ namespace AutoBattle
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.Write("]\t");
                 }
-
                 Console.Write(Environment.NewLine + Environment.NewLine);
             }
-
-            Console.Write(Environment.NewLine);
         }
     }
 }

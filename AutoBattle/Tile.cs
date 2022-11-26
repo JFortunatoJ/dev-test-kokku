@@ -17,12 +17,22 @@ namespace AutoBattle
 
         public string GetTileContent()
         {
-            return !IsOccupied ? "   " : character.Health.ToString(CultureInfo.InvariantCulture);
+            if (!IsOccupied)
+            {
+                return "   ";
+            }
+
+            if (!character.IsDead)
+            {
+                return $"{character.Name[0]}{character.Health:00}";
+            }
+
+            return "XXX";
         }
 
         public ConsoleColor GetColor()
         {
-            return IsOccupied ? character.Color : ConsoleColor.White;
+            return IsOccupied ? character.Team.Color : ConsoleColor.White;
         }
     }
 }
